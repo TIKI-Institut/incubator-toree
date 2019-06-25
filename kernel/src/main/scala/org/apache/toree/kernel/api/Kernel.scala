@@ -70,12 +70,15 @@ class Kernel (
 
   override def addJars(uris: URI*): Unit = {
     uris.foreach { uri =>
+      logger.warn("Kernel - addJars - uri: " + uri)
       if (uri.getScheme != "file") {
         throw new RuntimeException("Cannot add non-local jar: " + uri)
       }
     }
 
     jars ++= uris
+    logger.warn("Kernel - addJars - interpreter: " + interpreter)
+    logger.warn("Kernel - addJars - sparkContext: " + sparkContext)
     interpreter.addJars(uris.map(_.toURL):_*)
     uris.foreach(uri => sparkContext.addJar(uri.getPath))
   }

@@ -17,8 +17,12 @@
 
 package org.apache.toree.boot
 
+import java.io.File
+import java.net.URI
+
 import akka.actor.{ActorRef, ActorSystem}
 import com.typesafe.config.Config
+import org.apache.log4j.LogManager
 import org.apache.toree.boot.layer._
 import org.apache.toree.interpreter.Interpreter
 import org.apache.toree.kernel.api.Kernel
@@ -27,9 +31,7 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.apache.toree.security.KernelSecurityManager
 import org.apache.toree.utils.LogLike
-
 import org.apache.spark.repl.Main
-
 import org.zeromq.ZMQ
 
 import scala.concurrent.Await
@@ -66,6 +68,8 @@ class KernelBootstrap(config: Config) extends LogLike {
     //
 
     // ENSURE THAT WE SET THE RIGHT SPARK PROPERTIES
+    logger.warn("KernelBootstrap - initialize 123!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    logger.debug("KernelBootstrap - initialize debug")
     val execUri = System.getenv("SPARK_EXECUTOR_URI")
     System.setProperty("spark.repl.class.outputDir", outputDir.getAbsolutePath)
     if (execUri != null) {
@@ -105,6 +109,8 @@ class KernelBootstrap(config: Config) extends LogLike {
 
     this.kernel = kernel
 
+
+
     // Initialize our handlers that take care of processing messages
     initializeHandlers(
       actorSystem   = actorSystem,
@@ -133,7 +139,24 @@ class KernelBootstrap(config: Config) extends LogLike {
     logger.info("Marking relay as ready for receiving messages")
     kernelMessageRelayActor ! true
 
+    //TODO sk try load jars here
+    this.addJars()
+    logger.warn("KernelBootstrap - jars added")
+
     this
+  }
+
+  def addJars(): Unit ={
+    logger.warn("KernelBootstrap - addJars")
+    val d = new File("/data/jupyter/.local/lib/toree_jar")
+
+    if (d.exists && d.isDirectory) {
+      logger.warn("KernelBootstrap - addJars dir exists")
+      val jarList = d.listFiles.filter(_.isFile).filter(_.getName.endsWith(".jar")).map(_.toURI)
+      logger.warn("KernelBootstrap - addJar jarList: " + jarList)
+      kernel.addJars(jarList: _*)
+    }
+
   }
 
   /**

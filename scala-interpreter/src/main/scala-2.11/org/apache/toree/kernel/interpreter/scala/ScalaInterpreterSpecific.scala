@@ -105,6 +105,8 @@ trait ScalaInterpreterSpecific extends SettingsProducerLike { this: ScalaInterpr
    * @param jars The list of jar locations
    */
   override def addJars(jars: URL*): Unit = {
+    logger.warn("ScalaInterpreterSpecific - addJars iMain: " + iMain)
+    logger.warn("ScalaInterpreterSpecific - addJars jars: " + jars)
     iMain.addUrlsToClassPath(jars:_*)
     // the Scala interpreter will invalidate definitions for any package defined in
     // the new Jars. This can easily include org.* and make the kernel inaccessible
