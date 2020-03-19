@@ -19,6 +19,9 @@ package org.apache.toree.magic.builtin
 
 import java.io.OutputStream
 
+import org.apache.hadoop.conf.Configuration
+import org.apache.spark.SparkContext
+import org.apache.toree.kernel.api.KernelLike
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
@@ -29,54 +32,62 @@ class AwsumeSpec extends FunSpec with Matchers with MockitoSugar {
     describe("#execute") {
 
       it("should set aws envs ") {
+        val mockKernel = mock[KernelLike]
+        val mockHadoopConfiguration = new Configuration()
+        val mockSparkContext = mock[SparkContext]
+        val mockOutputStream = mock[OutputStream]
+
+        val awsumeMagic = spy(new Awsume)
+        doReturn(mockOutputStream)
+          .when(awsumeMagic).outputStream
+        doReturn(mockKernel)
+          .when(awsumeMagic).kernel
+        doReturn(mockSparkContext)
+          .when(mockKernel).sparkContext
+        doReturn(mockHadoopConfiguration)
+          .when(mockSparkContext).hadoopConfiguration
 
         val code = "test-profile"
-        val awsumeMagic = spy(new Awsume)
 
         doReturn("export AWS_ACCESS_KEY_ID=ASIAS\nexport AWS_SECRET_ACCESS_KEY=TihKG2/X4\nexport AWS_SESSION_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_SECURITY_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_REGION=eu-central-1\n export AWS_DEFAULT_REGION=eu-central-1\nexport AWSUME_PROFILE=%s".format(code))
           .when(awsumeMagic).runAwsumeCmd(any[String])
 
-
         awsumeMagic.execute(code)
 
-        scala.sys.env("AWS_ACCESS_KEY_ID") shouldBe "ASIAS"
-        scala.sys.env("AWS_SECRET_ACCESS_KEY") shouldBe "TihKG2/X4"
-        scala.sys.env("AWS_SESSION_TOKEN") shouldBe "FwoGZXIvYXdzEPn"
-        scala.sys.env("AWS_SECURITY_TOKEN") shouldBe "FwoGZXIvYXdzEPn"
-        scala.sys.env("AWS_REGION") shouldBe "eu-central-1"
-        //scala.sys.env("AWS_DEFAULT_REGION") shouldBe "eu-central-1"
-        scala.sys.env("AWSUME_PROFILE") shouldBe code
+        mockHadoopConfiguration.get("fs.s3a.access.key") shouldBe "ASIAS"
+        mockHadoopConfiguration.get("fs.s3a.secret.key") shouldBe "TihKG2/X4"
+        mockHadoopConfiguration.get("fs.s3a.session.token") shouldBe "FwoGZXIvYXdzEPn"
+        mockHadoopConfiguration.get("fs.s3a.endpoint") shouldBe "eu-central-1"
 
       }
 
       it("should set aws envs with mfa-token ") {
 
         val code = "test-profile --mfa-token 123456"
+        val mockKernel = mock[KernelLike]
+        val mockHadoopConfiguration = new Configuration()
+        val mockSparkContext = mock[SparkContext]
+        val mockOutputStream = mock[OutputStream]
+
         val awsumeMagic = spy(new Awsume)
+        doReturn(mockOutputStream)
+          .when(awsumeMagic).outputStream
+        doReturn(mockKernel)
+          .when(awsumeMagic).kernel
+        doReturn(mockSparkContext)
+          .when(mockKernel).sparkContext
+        doReturn(mockHadoopConfiguration)
+          .when(mockSparkContext).hadoopConfiguration
 
-        doReturn("export AWS_ACCESS_KEY_ID=ASIAS\nexport AWS_SECRET_ACCESS_KEY=TihKG2/X4\nexport AWS_SESSION_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_SECURITY_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_REGION=eu-central-1\n export AWS_DEFAULT_REGION=eu-central-1\nexport AWSUME_PROFILE=%s".format(code))
-          .when(awsumeMagic).runAwsumeCmd("test-profile --mfa-token 123456")
-
+        doReturn("export AWS_ACCESS_KEY_ID=ASIAS\nexport AWS_SECRET_ACCESS_KEY=TihKG2/X4\nexport AWS_SESSION_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_SECURITY_TOKEN=FwoGZXIvYXdzEPn\nexport AWS_REGION=eu-central-1\n export AWS_DEFAULT_REGION=eu-central-1\nexport AWSUME_PROFILE=test-profile")
+          .when(awsumeMagic).runAwsumeCmd(any[String])
 
         awsumeMagic.execute(code)
 
-        scala.sys.env("AWS_ACCESS_KEY_ID") shouldBe "ASIAS"
-        scala.sys.env("AWS_SECRET_ACCESS_KEY") shouldBe "TihKG2/X4"
-        scala.sys.env("AWS_SESSION_TOKEN") shouldBe "FwoGZXIvYXdzEPn"
-        scala.sys.env("AWS_SECURITY_TOKEN") shouldBe "FwoGZXIvYXdzEPn"
-        scala.sys.env("AWS_REGION") shouldBe "eu-central-1"
-        //scala.sys.env("AWS_DEFAULT_REGION") shouldBe "eu-central-1"
-        scala.sys.env("AWSUME_PROFILE") shouldBe code
-      }
+        mockHadoopConfiguration.get("fs.s3a.access.key") shouldBe "ASIAS"
+        mockHadoopConfiguration.get("fs.s3a.secret.key") shouldBe "TihKG2/X4"
+        mockHadoopConfiguration.get("fs.s3a.session.token") shouldBe "FwoGZXIvYXdzEPn"
 
-      it("should set envs") {
-        import scala.collection.JavaConverters._
-        val awsumeMagic = new Awsume
-        val testEnvMap = Map("ENV_BLUB" -> "Bla")
-          .asJava
-        awsumeMagic.setEnv(testEnvMap)
-
-        scala.sys.env("ENV_BLUB") shouldBe "Bla"
       }
 
       it("should print help with wrong command") {

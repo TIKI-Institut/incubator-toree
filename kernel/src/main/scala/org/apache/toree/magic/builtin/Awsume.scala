@@ -18,21 +18,17 @@
 package org.apache.toree.magic.builtin
 
 import java.io.PrintStream
-import java.util.{Map => JavaMap}
 
-import com.google.common.base.Strings
-import org.apache.toree.kernel.protocol.v5.MIMEType
 import org.apache.toree.magic._
-import org.apache.toree.magic.dependencies.IncludeOutputStream
+import org.apache.toree.magic.dependencies.{IncludeKernel, IncludeOutputStream}
 import org.apache.toree.plugins.annotations.Event
 import org.apache.toree.utils.ArgumentParsingSupport
-
-import scala.reflect.internal.util.Collections
 
 class Awsume
   extends LineMagic
     with ArgumentParsingSupport
-    with IncludeOutputStream {
+    with IncludeOutputStream
+    with IncludeKernel {
 
   // Lazy because the outputStream is not provided at construction
   private def printStream = new PrintStream(outputStream)
@@ -44,14 +40,14 @@ class Awsume
 
   @Event(name = "awsume")
   override def execute(code: String): Unit = {
-    import scala.collection.JavaConverters._
     val nonOptionalargs = parseArgs(code)
+
     val mfaTokenValue = get(_mfaToken).getOrElse(-1)
 
     if (nonOptionalargs.size == 1) {
-      val awsume_result = if(mfaTokenValue == -1){
+      val awsume_result = if (mfaTokenValue == -1) {
         runAwsumeCmd(nonOptionalargs.head)
-      }else{
+      } else {
         runAwsumeCmd("%s --mfa-token %s".format(nonOptionalargs.head, mfaTokenValue))
       }
 
@@ -60,65 +56,29 @@ class Awsume
         printStream.println(s"There was an error with awsume.")
         printHelp(outputStream, """%%Awsume profile --mfa-token mfa-token""")
       } else {
-        awsume_result
+
+        val awsCredMap = awsume_result
           .split("\n")
-          .foreach(cmd => {
+          .map(cmd => {
             val cmdCleaned = cmd
               .replace("export ", "")
               .split("=")
-            val envName = cmdCleaned.head
-            val envValue = cmdCleaned(1)
-            val mapTest =
-              Map(envName -> envValue)
-                .asJava
-            setEnv(mapTest)
-          })
+
+            cmdCleaned.head -> cmdCleaned(1)
+          }).toMap
+        // set KEYs
+        kernel.sparkContext.hadoopConfiguration.set("fs.s3a.aws.credentials.provider", "org.apache.hadoop.fs.s3a.TemporaryAWSCredentialsProvider")
+        kernel.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", awsCredMap("AWS_ACCESS_KEY_ID"))
+        kernel.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", awsCredMap("AWS_SECRET_ACCESS_KEY"))
+        kernel.sparkContext.hadoopConfiguration.set("fs.s3a.session.token", awsCredMap("AWS_SESSION_TOKEN"))
+
       }
 
     }
   }
 
-  def runAwsumeCmd(profile:String):String = {
+  def runAwsumeCmd(profile: String): String = {
     sys.process.Process("awsume %s -s".format(profile)).!!
   }
-  def setEnv(newEnv: JavaMap[String, String]): Unit = {
-    try {
-      val processEnvironmentClass =
-        Class.forName("java.lang.ProcessEnvironment")
-      val theEnvironmentField =
-        processEnvironmentClass.getDeclaredField("theEnvironment")
-      theEnvironmentField.setAccessible(true)
-      val env =
-        theEnvironmentField.get(null).asInstanceOf[JavaMap[String, String]]
-      env.putAll(newEnv)
-      val theCaseInsensitiveEnvironmentField =
-        processEnvironmentClass.getDeclaredField(
-          "theCaseInsensitiveEnvironment")
-      theCaseInsensitiveEnvironmentField.setAccessible(true)
-      val cienv = theCaseInsensitiveEnvironmentField
-        .get(null)
-        .asInstanceOf[JavaMap[String, String]]
-      cienv.putAll(newEnv)
-    } catch {
-      case e: NoSuchFieldException =>
-        try {
-          val classes = classOf[Collections].getDeclaredClasses()
-          val env = System.getenv()
-          for (cl <- classes) {
-            if (cl.getName() == "java.util.Collections$UnmodifiableMap") {
-              val field = cl.getDeclaredField("m")
-              field.setAccessible(true)
-              val obj = field.get(env)
-              val map = obj.asInstanceOf[JavaMap[String, String]]
-              map.clear()
-              map.putAll(newEnv)
-            }
-          }
-        } catch {
-          case e2: Exception => e2.printStackTrace()
-        }
 
-      case e1: Exception => e1.printStackTrace()
-    }
-  }
 }
