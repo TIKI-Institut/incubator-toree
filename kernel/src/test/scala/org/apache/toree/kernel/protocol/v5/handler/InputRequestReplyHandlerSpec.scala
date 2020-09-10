@@ -26,7 +26,7 @@ import org.apache.toree.kernel.protocol.v5.content.InputReply
 import org.apache.toree.kernel.protocol.v5.{HeaderBuilder, MessageType, KMBuilder, SystemActorType}
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.scalatest.concurrent.Eventually
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.time.{Milliseconds, Span}
 import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
 import test.utils.MaxAkkaTestTimeout
@@ -131,7 +131,7 @@ class InputRequestReplyHandlerSpec
         fakeSender.send(inputRequestReplyHandler, inputReplyMessage)
 
         // Sender should not receive a response
-        fakeSender.expectNoMsg(MaxAkkaTestTimeout)
+        fakeSender.expectNoMessage(MaxAkkaTestTimeout)
       }
     }
   }

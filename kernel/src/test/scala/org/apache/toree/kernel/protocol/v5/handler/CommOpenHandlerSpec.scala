@@ -30,7 +30,7 @@ import org.apache.toree.comm._
 import org.apache.toree.kernel.protocol.v5.kernel.ActorLoader
 import org.mockito.Mockito._
 import org.mockito.Matchers._
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
 import test.utils.MaxAkkaTestTimeout
 
@@ -122,7 +122,7 @@ class CommOpenHandlerSpec extends TestKit(
 
         // TODO: Is there a better way to test for this without an upper time
         //       limit? Is there a different logical approach?
-        kernelMessageRelayProbe.expectNoMsg(MaxAkkaTestTimeout)
+        kernelMessageRelayProbe.expectNoMessage(MaxAkkaTestTimeout)
       }
 
       it("should include the parent's header in the parent header of " +

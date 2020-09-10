@@ -25,7 +25,7 @@ import org.apache.toree.kernel.protocol.v5._
 import org.apache.toree.kernel.protocol.v5.client.ActorLoader
 import org.apache.toree.kernel.protocol.v5.client.socket.StdinClient.{ResponseFunctionMessage, ResponseFunction}
 import org.apache.toree.kernel.protocol.v5.content.{InputReply, InputRequest, ClearOutput, ExecuteRequest}
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
 import org.apache.toree.kernel.protocol.v5.client.Utilities._
 import play.api.libs.json.Json
@@ -105,7 +105,7 @@ class StdinClientSpec extends TestKit(ActorSystem("StdinActorSpec"))
 
         stdinClient ! notInputRequestMessage
 
-        socketProbe.expectNoMsg(300.milliseconds)
+        socketProbe.expectNoMessage(300.milliseconds)
       }
 
       it("should respond with an input_reply if the incoming message is " +

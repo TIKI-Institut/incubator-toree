@@ -26,7 +26,7 @@ import org.apache.toree.kernel.protocol.v5.kernel.{ActorLoader, Utilities}
 import Utilities._
 import org.mockito.Mockito._
 import org.scalatest.concurrent.{PatienceConfiguration, ScalaFutures}
-import org.scalatest.mock.MockitoSugar
+import org.scalatestplus.mockito.MockitoSugar
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{BeforeAndAfter, FunSpecLike, Matchers}
 import org.mockito.Matchers.{eq => mockEq}
@@ -104,12 +104,12 @@ class KernelMessageRelaySpec extends TestKit(
         it("should not send anything to SignatureManager for incoming") {
           relayWithoutSignatureManager ! true // Mark as ready for incoming
           relayWithoutSignatureManager ! incomingKernelMessage
-          signatureProbe.expectNoMsg(MaxAkkaTestTimeout)
+          signatureProbe.expectNoMessage(MaxAkkaTestTimeout)
         }
 
         it("should not send anything to SignatureManager for outgoing") {
           relayWithoutSignatureManager ! outgoingKernelMessage
-          signatureProbe.expectNoMsg(MaxAkkaTestTimeout)
+          signatureProbe.expectNoMessage(MaxAkkaTestTimeout)
         }
 
         it("should relay KernelMessage for incoming") {
@@ -143,7 +143,7 @@ class KernelMessageRelaySpec extends TestKit(
           val incomingMessage: ZMQMessage = incomingKernelMessage
 
           relayWithoutSignatureManager ! incomingMessage
-          captureProbe.expectNoMsg(MaxAkkaTestTimeout)
+          captureProbe.expectNoMessage(MaxAkkaTestTimeout)
         }
 
         it("should relay the message if it is outgoing") {
