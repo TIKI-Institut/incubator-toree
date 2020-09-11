@@ -259,7 +259,7 @@ class CoursierDependencyDownloader extends DependencyDownloader {
       val ratio = downloadAmount(url).toDouble / downloadTotal.getOrElse[Long](url, 1).toDouble
       val percent = ratio * 100.0
 
-      if (trace) printStream.printf(
+      if (trace) printStream.println(
         "===> %s %s: Downloaded %d bytes (%.2f%%)\n",
         downloadId.getOrElse(url, url),
         s"(${downloadFile.get(url).map(_.getName).getOrElse("")})",
