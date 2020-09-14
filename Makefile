@@ -58,7 +58,7 @@ RUN_SUFFIX=$(if $(USE_VAGRANT),")
 
 RUN=$(RUN_PREFIX)$(1)$(RUN_SUFFIX)
 
-ENV_OPTS:=APACHE_SPARK_VERSION=$(APACHE_SPARK_VERSION) VERSION=$(VERSION) IS_SNAPSHOT=$(IS_SNAPSHOT)
+ENV_OPTS:=APACHE_SPARK_VERSION=$(APACHE_SPARK_VERSION) VERSION=$(VERSION) IS_SNAPSHOT=$(IS_SNAPSHOT) SCALA_VERSION=$(SCALA_VERSION)
 
 ASSEMBLY_JAR:=toree-assembly-$(VERSION)$(SNAPSHOT).jar
 
@@ -127,7 +127,7 @@ sbt-%:
 
 dist/toree/lib: target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR)
 	@mkdir -p dist/toree/lib
-	@cp target/scala-$(SCALA_VERSION)/$(ASSEMBLY_JAR) dist/toree/lib/.
+	@cp target/scala-2.12/$(ASSEMBLY_JAR) dist/toree/lib/.
 
 dist/toree/bin: ${shell find ./etc/bin/*}
 	@mkdir -p dist/toree/bin
