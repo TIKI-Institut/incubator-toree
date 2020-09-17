@@ -360,7 +360,8 @@ trait ScalaInterpreterSpecific extends SettingsProducerLike { this: ScalaInterpr
     s.processArguments(args ++
       List(
         "-Yrepl-class-based",
-        "-Yrepl-outdir", s"$dir"
+        "-Yrepl-outdir", s"$dir",
+        "-usejavacp"
         // useful for debugging compiler classpath or package issues
         // "-uniqid", "-explaintypes", "-usejavacp", "-Ylog-classpath"
     ), processAll = true)
